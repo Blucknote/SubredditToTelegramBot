@@ -77,7 +77,7 @@ def prepare(post: list, channel: str):
 
 
         if not is_photo(post['url']):        #domain or gif
-            media = redditsaver.processDomains(post['url'])
+            media = redditsaver.process_domains(post['url'])
 
             *links, = map(
                 lambda x:dict(
