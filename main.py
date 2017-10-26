@@ -1,5 +1,10 @@
 import configparser
-import redditsaver
+from sys import argv
+from urllib.request import urlopen
+from redditsaver import reddit as rsave
+from tgapi import api
+from tgkeyboard import keyboard
+from settings import debugch
 
 def retry(fn):
     def wrapper(addr, retries = 10, i:"counter" = 0):
@@ -128,9 +133,9 @@ def get_posts(sources: dict, targetChannel: str, user = False):
 
     for reddit in reddits:
         if user:
-            posts = redditsaver.get(reddit['user'])
+            posts = rsave.get(reddit['user'])
         else:
-            posts = redditsaver.get(reddit['link'])
+            posts = rsave.get(reddit['link'])
 
         if posts is not None:
             *post, = filter(
@@ -149,9 +154,13 @@ def get_posts(sources: dict, targetChannel: str, user = False):
     return newtime
 
 def send_posts(debug = False):
-    src = read_settings(sys.argv[1])
+    src = read_settings(argv[1])
     if debug:
         times = get_posts(src['src'], debugch)
     else:
         times = get_posts(src['src'], src['channel'])
     #save_settings(sys.argv[1], times)
+
+if __name__ == '__main__':
+    argv.append(input('enter settings filename: '))
+    send_posts(True)
