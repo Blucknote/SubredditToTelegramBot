@@ -1,0 +1,6 @@
+[submodule "tgkeyboard"]
+	path = tgkeyboard
+	url = https://github.com/Blucknote/tgkeyboard
+[submodule "tgapi"]
+	path = tgapi
+	url = https://github.com/Blucknote/tgapi
