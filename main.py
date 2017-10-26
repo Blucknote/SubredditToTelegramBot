@@ -1,6 +1,6 @@
 import configparser
 from sys import argv
-from urllib.request import urlopen
+from urllib.request import urlopen, quote
 from redditsaver import reddit as rsave
 from tgapi import api
 from tgkeyboard import keyboard
@@ -82,7 +82,7 @@ def prepare(post: list, channel: str):
 
 
         if not is_photo(post['url']):        #domain or gif
-            media = redditsaver.process_domains(post['url'])
+            media = rsave.process_domains(post['url'])
 
             *links, = map(
                 lambda x:dict(
@@ -150,7 +150,7 @@ def get_posts(sources: dict, targetChannel: str, user = False):
                 )
 
         newtime[reddit['name']] = reddit['lastpost']
-        save_settings(sys.argv[1], newtime)
+        save_settings(argv[1], newtime)
     return newtime
 
 def send_posts(debug = False):
