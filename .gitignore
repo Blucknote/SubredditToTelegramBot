@@ -1,3 +1,5 @@
 *.ini 
 settings.py
 __pycache__
+*.wpr
+*.wpu
