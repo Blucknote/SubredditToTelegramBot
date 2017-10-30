@@ -4,6 +4,7 @@
 [submodule "tgapi"]
 	path = tgapi
 	url = https://github.com/Blucknote/tgapi
-[submodule "relative"]
+[submodule "redditsaver"]
 	path = redditsaver
 	url = https://github.com/Blucknote/redditsaver
+	branch = relative
