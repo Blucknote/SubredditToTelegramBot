@@ -1,10 +1,15 @@
 from redditsaver import reddit as rsave
 from tgapi import api
 from tgkeyboard import keyboard
+from sys import argv
 from urllib.request import urlopen, quote
 import data
 
-
+if len(argv) > 1:
+    if argv[1] == 'add':
+        data.sourcers_add()
+    if argv[1] == 'settings':
+        data.settings_edit()
 
 def retry(fn):
     def wrapper(addr, retries = 10, i:"counter" = 0):
