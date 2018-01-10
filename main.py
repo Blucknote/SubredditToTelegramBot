@@ -83,7 +83,6 @@ def sender(prepared: list):
         urlopen(addr)
     
     for prep in prepared:
-
         method = 'sendPhoto?' if is_photo(prep['url']) else 'sendVideo?'
         mediaType = '&photo=%s' if is_photo(prep['url']) else '&video=%s'
 
@@ -101,7 +100,6 @@ def sender(prepared: list):
 
 def get_posts(_data:dict, user = False, debug = False):
     domain = 'https://www.reddit.com/'
-    #reddits =  source(_data)
     for dat in _data:
         dat['link'] = '%sr/%s.json' % (domain, dat['name'])
         dat['user'] = '%suser/%s/submitted.json' % (domain, dat['name'])                       
@@ -126,7 +124,5 @@ def get_posts(_data:dict, user = False, debug = False):
                 )
         
         data.sourcers_update(reddit['name'], reddit['lastpost'])
-    #return newtime
 
-if __name__ == '__main__':
-    get_posts(data.sourcers, debug= True)
+get_posts(data.sourcers, debug= True)
