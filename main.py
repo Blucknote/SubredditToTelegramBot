@@ -4,12 +4,7 @@ from tgkeyboard import keyboard
 from sys import argv
 from urllib.request import urlopen, quote
 import data
-
-if len(argv) > 1:
-    if argv[1] == 'add':
-        data.sourcers_add()
-    if argv[1] == 'settings':
-        data.settings_edit()
+import json
 
 def retry(fn):
     def wrapper(addr, retries = 10, i:"counter" = 0):
@@ -53,29 +48,41 @@ def prepare(post: list, channel: str):
         )
 
 
-        if not is_photo(post['url']):        #domain or gif
-            media = rsave.process_domains(post['url'])
-
-            *links, = map(
-                lambda x:dict(
-                    url = x,
-                    kb = '&reply_markup=%s' % keyboard.build(kb),
-                    caption = '&caption=%s' % quote(post['title']),
-                    channel = channel                    
-                ), media                
-            )
-            return links
-        
-        else:                               #jpg
+        if is_photo(post['url']) or post['url'].endswith('.gif'):    #jpg or gif
             return [
                 dict(url = post['url'],
                      caption = '&caption=%s' % quote(post['title']),
                      kb = '&reply_markup=%s' % keyboard.build(kb),
-                     channel = channel)                
-            ] 
-
+                     channel = channel)
+            ]
+        else:   #domain
+            media = rsave.process_domains(post['url'])
+            if media:
+                if len(media) > 1:
+                    for i, x in enumerate(media):
+                        media[i] = {'type': 'photo',
+                     'media': x}
+                        
+                    api.send_media_group(
+                        data.params['token'],
+                        channel,
+                        json.dumps(media)
+                    )
+                    #because in api you cant send keyboard with media group
+                    api.send_message(
+                        data.params['token'],
+                        channel,
+                        post['title'],
+                        keyboard.build(kb)
+                    )
+                else:
+                    return [dict(url = media.pop(),
+                                caption = '&caption=%s' % quote(post['title']),
+                                kb = '&reply_markup=%s' % keyboard.build(kb),
+                                channel = channel)]
+            
     *prepared, = map(processing, map(lambda x: x['data'], post))
-    *sending, = map(sender, filter(lambda x: x is not None, prepared))
+    *sending, = map(sender, prepared)
 
 def sender(prepared: list):
     @retry
@@ -83,8 +90,12 @@ def sender(prepared: list):
         urlopen(addr)
     
     for prep in prepared:
-        method = 'sendPhoto?' if is_photo(prep['url']) else 'sendVideo?'
-        mediaType = '&photo=%s' if is_photo(prep['url']) else '&video=%s'
+        if is_photo(prep['url']):
+            method = 'sendPhoto?'
+            mediaType = '&photo=%s'
+        else:
+            method = 'sendVideo?'
+            mediaType = '&video=%s'
 
         addr = {
             'api': api.domain % data.params['token'],
@@ -116,8 +127,8 @@ def get_posts(_data:dict, user = False, debug = False):
                 lambda newtime, oldtime = float(reddit['lastpost']):
                 newtime['data']['created'] > oldtime, posts                
             )      
-
-            if post:     #check for newer posts exist
+            #check for newer posts exist
+            if post:     
                 prepare(post, reddit['channel'] if not debug else data.params['debugch'])
                 reddit['lastpost'] = max(
                     map(lambda x:x['data']['created'],post)
@@ -125,4 +136,12 @@ def get_posts(_data:dict, user = False, debug = False):
         
         data.sourcers_update(reddit['name'], reddit['lastpost'])
 
-get_posts(data.sourcers, debug= True)
+if len(argv) > 1:
+    if argv[1] == 'add':
+        data.sourcers_add()
+    if argv[1] == 'settings':
+        data.settings_edit()
+    if argv[1] == 'debug':
+        get_posts(data.sourcers, debug= True)
+
+get_posts(data.sourcers)
