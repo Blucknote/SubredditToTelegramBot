@@ -4,24 +4,63 @@ from tgkeyboard import keyboard
 from sys import argv
 from urllib.request import urlopen, quote
 import data
-import json
+import re
 
-def retry(fn):
-    def wrapper(addr, retries = 10, i:"counter" = 0):
-        while i < retries:
-            try:
-                fn(addr)
-            except:
-                i += 1
-            else:
-                break
-    return wrapper
+photo = re.compile(r'jpe?g|png')
 
 def is_photo(string):
-    return string.split('.')[-1] in ['jpg', 'jpeg', 'png']
+    return re.findall(photo, string)
 
-def prepare(post: list, channel: str):
-    def processing(post):
+def send(url, channel, text = '', reply = ''):
+    #jpg
+    if is_photo(url):
+        api.send_photo(
+            data.params['token'],
+            channel,
+            url,
+            '', 
+            reply
+        )
+    #gif
+    elif url.endswith('.gif'):
+        api.send_document(
+            data.params['token'],
+            channel,
+            url,
+            '',
+            reply
+        )
+    #video
+    elif url.split('.')[-1] in ['mp4', 'gifv', 'WebM']:
+        api.send_video(
+            data.params['token'],
+            channel,
+            url,
+            '',
+            reply
+        )
+    #domain
+    else:
+        media = rsave.process_domains(url)
+        if media:
+            if len(media) > 1:
+                api.send_media_group(
+                    data.params['token'],
+                    channel,
+                    media
+                )
+                #because in api you cant send keyboard with media group
+                api.send_message(
+                    data.params['token'],
+                    channel,
+                    text,
+                    reply
+                )
+            else:
+                send(media.pop(), channel, text, reply)   
+
+def prepare(posts: list, channel: str or int):
+    for post in [x['data'] for x in posts]:
         domain = 'https://www.reddit.com'
         kb = keyboard.create(3, True)
         kbrow = kb['inline_keyboard']
@@ -46,68 +85,7 @@ def prepare(post: list, channel: str):
                             'https://telegram.me/redditchanelbot?start=%s'
                             % post['author'])
         )
-
-
-        if is_photo(post['url']) or post['url'].endswith('.gif'):    #jpg or gif
-            return [
-                dict(url = post['url'],
-                     caption = '&caption=%s' % quote(post['title']),
-                     kb = '&reply_markup=%s' % keyboard.build(kb),
-                     channel = channel)
-            ]
-        else:   #domain
-            media = rsave.process_domains(post['url'])
-            if media:
-                if len(media) > 1:
-                    for i, x in enumerate(media):
-                        media[i] = {'type': 'photo',
-                     'media': x}
-                        
-                    api.send_media_group(
-                        data.params['token'],
-                        channel,
-                        json.dumps(media)
-                    )
-                    #because in api you cant send keyboard with media group
-                    api.send_message(
-                        data.params['token'],
-                        channel,
-                        post['title'],
-                        keyboard.build(kb)
-                    )
-                else:
-                    return [dict(url = media.pop(),
-                                caption = '&caption=%s' % quote(post['title']),
-                                kb = '&reply_markup=%s' % keyboard.build(kb),
-                                channel = channel)]
-            
-    *prepared, = map(processing, map(lambda x: x['data'], post))
-    *sending, = map(sender, prepared)
-
-def sender(prepared: list):
-    @retry
-    def inner(addr):
-        urlopen(addr)
-    
-    for prep in prepared:
-        if is_photo(prep['url']):
-            method = 'sendPhoto?'
-            mediaType = '&photo=%s'
-        else:
-            method = 'sendVideo?'
-            mediaType = '&video=%s'
-
-        addr = {
-            'api': api.domain % data.params['token'],
-            'method': method,
-            'channel': 'chat_id=%s' % prep['channel'],
-            'type': mediaType % prep['url'],
-            'caption': prep['caption'],
-            'kb': prep['kb'],            
-        }
-
-        inner('{api}{method}{channel}{type}{caption}{kb}'.format(**addr))
-    
+        send(post['url'], channel, post['title'] , keyboard.build(kb))
 
 def get_posts(_data:dict, user = False, debug = False):
     domain = 'https://www.reddit.com/'
@@ -126,10 +104,15 @@ def get_posts(_data:dict, user = False, debug = False):
             *post, = filter(
                 lambda newtime, oldtime = float(reddit['lastpost']):
                 newtime['data']['created'] > oldtime, posts                
-            )      
+            )
+            
             #check for newer posts exist
-            if post:     
-                prepare(post, reddit['channel'] if not debug else data.params['debugch'])
+            if post:              
+                prepare(
+                    post,
+                    reddit['channel'] if not debug else data.params['debugch']
+                )
+                
                 reddit['lastpost'] = max(
                     map(lambda x:x['data']['created'],post)
                 )
