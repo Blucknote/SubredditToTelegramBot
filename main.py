@@ -85,7 +85,7 @@ def get_posts(_data:dict, user = False, debug = False):
             if post:              
                 prepare(
                     post,
-                    reddit['channel'] if not debug else '106989752'
+                    reddit['channel'] if not debug else bot.debugch
                 )
                 
                 reddit['lastpost'] = max(

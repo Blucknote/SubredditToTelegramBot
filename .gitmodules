@@ -3,4 +3,5 @@
 	url = https://github.com/Blucknote/tgbot
 [submodule "redditsaver"]
 	path = redditsaver
-	url = https://github.com/Blucknote/redditsaver
+	url = https://github.com/Blucknote/redditsaver/
+	branch = relative
