@@ -30,6 +30,10 @@ def sourcers_update(name, lastpost):
                    (lastpost, name))
     data.commit()
 
-sourcers = sourcers = [dict(x) for x in  cursor.execute('select * from sourcers').fetchall()]
-if not sourcers:
-    sourcers_add()
+
+sourcers = [
+    dict(x) for x in  cursor.execute('select * from sourcers').fetchall()
+]
+if __name__ == '__main__':
+    if not sourcers:
+        sourcers_add()
