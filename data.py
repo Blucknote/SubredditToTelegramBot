@@ -7,28 +7,9 @@ cursor = data.cursor()
 
 #table creation
 try:
-    cursor.execute('create table settings(token text,debugch integer)')
-except OperationalError:
-    pass  #table exist
-
-#table creation
-try:
     cursor.execute('create table sourcers(channel text,name text unique,lastpost integer)')
 except OperationalError:
     pass  #table exist
-
-
-def settings_edit():
-    token = input('Enter token: ')
-    debugch = input('Enter debug channel: ')
-    cursor.execute('insert into settings values(?,?)', (token, debugch))
-    data.commit()    
-
-
-params = dict(cursor.execute('select * from settings').fetchall()[0])
-if not params:
-    settings_edit()
-
 
 def sourcers_add():
     while True:

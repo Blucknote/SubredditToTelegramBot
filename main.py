@@ -1,9 +1,8 @@
 from redditsaver import reddit as rsave
-from tgapi import api
-from tgkeyboard import keyboard
 from sys import argv
 from urllib.request import urlopen, quote
 import data
+import tgbot.main as bot
 import re
 
 photo = re.compile(r'jpe?g|png')
@@ -14,78 +13,52 @@ def is_photo(string):
 def send(url, channel, text = '', reply = ''):
     #jpg
     if is_photo(url):
-        api.send_photo(
-            data.params['token'],
-            channel,
-            url,
-            '', 
-            reply
-        )
+        bot.send_photo(channel, url, text, reply)
+    
     #gif
     elif url.endswith('.gif'):
-        api.send_document(
-            data.params['token'],
-            channel,
-            url,
-            '',
-            reply
-        )
+        bot.send_document(channel, url, text, reply)
+    
     #video
     elif url.split('.')[-1] in ['mp4', 'gifv', 'WebM']:
-        api.send_video(
-            data.params['token'],
-            channel,
-            url,
-            '',
-            reply
-        )
+        bot.send_video(channel, url, text, reply)
+    
     #domain
     else:
         media = rsave.process_domains(url)
         if media:
             if len(media) > 1:
-                api.send_media_group(
-                    data.params['token'],
-                    channel,
-                    media
-                )
+                bot.send_media_group(channel, media)
+                
                 #because in api you cant send keyboard with media group
-                api.send_message(
-                    data.params['token'],
-                    channel,
-                    text,
-                    reply
-                )
+                bot.send_message(channel, text, reply)
             else:
                 send(media.pop(), channel, text, reply)   
 
 def prepare(posts: list, channel: str or int):
     for post in [x['data'] for x in posts]:
         domain = 'https://www.reddit.com'
-        kb = keyboard.create(3, True)
-        kbrow = kb['inline_keyboard']
-        kbrow[0].append(
-            keyboard.button(
-                kb,
-                post['subreddit'],
-                '%s/r/%s' % (domain, post['subreddit'])
-            )
+        post_keyboard = bot.Keyboard(inline = True, rows= 3)
+        
+        post_keyboard.add_button(
+            0,
+            caption= post['subreddit'],
+            link= '%s/r/%s' % (domain, post['subreddit'])
         )
-
-        kbrow[1].append(
-            keyboard.button(
-                kb,
-                post['author'],
-                '%s/user/%s/submitted' % (domain, post['author'])
-            )
+        
+        post_keyboard.add_button(
+            1,
+            caption= post['author'],
+            link= '%s/user/%s/submitted' % (domain, post['author'])            
         )
-        kbrow[2].append(
-            keyboard.button(kb,
-                            'Подписаться',
-                            'https://telegram.me/redditchanelbot?start=%s'
-                            % post['author'])
+        
+        post_keyboard.add_button(
+            2,
+            caption= 'Подписаться',
+            link= 'https://telegram.me/redditchanelbot?start=%s'
+            % post['author']            
         )
-        send(post['url'], channel, post['title'] , keyboard.build(kb))
+        send(post['url'], channel, quote(post['title']) , post_keyboard)
 
 def get_posts(_data:dict, user = False, debug = False):
     domain = 'https://www.reddit.com/'
@@ -101,16 +74,18 @@ def get_posts(_data:dict, user = False, debug = False):
             posts = rsave.get(reddit['link'])
 
         if posts is not None:
-            *post, = filter(
-                lambda newtime, oldtime = float(reddit['lastpost']):
-                newtime['data']['created'] > oldtime, posts                
-            )
+            post = [
+                *filter(
+                    lambda newtime, oldtime = float(reddit['lastpost']):
+                    newtime['data']['created'] > oldtime, posts                 
+                )                
+            ]
             
             #check for newer posts exist
             if post:              
                 prepare(
                     post,
-                    reddit['channel'] if not debug else data.params['debugch']
+                    reddit['channel'] if not debug else '106989752'
                 )
                 
                 reddit['lastpost'] = max(
@@ -122,8 +97,6 @@ def get_posts(_data:dict, user = False, debug = False):
 if len(argv) > 1:
     if argv[1] == 'add':
         data.sourcers_add()
-    if argv[1] == 'settings':
-        data.settings_edit()
     if argv[1] == 'debug':
         get_posts(data.sourcers, debug= True)
 

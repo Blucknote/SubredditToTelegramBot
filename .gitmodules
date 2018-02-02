@@ -1,10 +1,6 @@
-[submodule "tgkeyboard"]
-	path = tgkeyboard
-	url = https://github.com/Blucknote/tgkeyboard
+[submodule "tgbot"]
+	path = tgbot
+	url = https://github.com/Blucknote/tgbot
 [submodule "redditsaver"]
 	path = redditsaver
 	url = https://github.com/Blucknote/redditsaver
-	branch = relative
-[submodule "tgapi"]
-	path = tgapi
-	url = https://github.com/Blucknote/tgapi
