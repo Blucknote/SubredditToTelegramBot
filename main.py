@@ -92,7 +92,10 @@ def get_posts(_data:dict, user = False, debug = False):
                     map(lambda x:x['data']['created'],post)
                 )
         
-        data.sourcers_update(reddit['name'], reddit['lastpost'])
+        if not user:
+            data.sourcers_update(reddit['name'], reddit['lastpost'])
+        else:
+            return {reddit['name']:reddit['lastpost']}
 
 if len(argv) > 1:
     if argv[1] == 'add':
