@@ -2,7 +2,7 @@ from redditsaver import reddit as rsave
 from sys import argv
 from urllib.request import urlopen, quote
 import data
-import tgbot.main as bot
+import tgbot
 import re
 
 photo = re.compile(r'jpe?g|png')
@@ -13,32 +13,32 @@ def is_photo(string):
 def send(url, channel, text = '', reply = ''):
     #jpg
     if is_photo(url):
-        bot.send_photo(channel, url, text, reply)
+        tgbot.send_photo(channel, url, text, reply)
     
     #gif
     elif url.endswith('.gif'):
-        bot.send_document(channel, url, text, reply)
+        tgbot.send_document(channel, url, text, reply)
     
     #video
     elif url.split('.')[-1] in ['mp4', 'gifv', 'WebM']:
-        bot.send_video(channel, url, text, reply)
+        tgbot.send_video(channel, url, text, reply)
     
     #domain
     else:
         media = rsave.process_domains(url)
         if media:
             if len(media) > 1:
-                bot.send_media_group(channel, media)
+                tgbot.send_media_group(channel, media)
                 
                 #because in api you cant send keyboard with media group
-                bot.send_message(channel, text, reply)
+                tgbot.send_message(channel, text, reply)
             else:
                 send(media.pop(), channel, text, reply)   
 
 def prepare(posts: list, channel: str or int):
     for post in [x['data'] for x in posts]:
         domain = 'https://www.reddit.com'
-        post_keyboard = bot.Keyboard(inline = True, rows= 3)
+        post_keyboard = tgbot.Keyboard(inline = True, rows= 3)
         
         post_keyboard.add_button(
             0,
@@ -55,7 +55,7 @@ def prepare(posts: list, channel: str or int):
         post_keyboard.add_button(
             2,
             caption= 'Подписаться',
-            link= 'https://telegram.me/redditchanelbot?start=%s'
+            link= 'https://telegram.me/redditchaneltgbot?start=%s'
             % post['author']            
         )
         send(post['url'], channel, quote(post['title']) , post_keyboard)
@@ -85,7 +85,7 @@ def get_posts(_data:dict, user = False, debug = False):
             if post:              
                 prepare(
                     post,
-                    reddit['channel'] if not debug else bot.debugch
+                    reddit['channel'] if not debug else tgbot.debugch
                 )
                 
                 reddit['lastpost'] = max(

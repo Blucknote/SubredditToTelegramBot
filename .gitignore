@@ -1,5 +1,5 @@
 *.db
 __pycache__
-settings.json
+conf.yml
 *.wpr
 *.wpu
