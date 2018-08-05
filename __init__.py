@@ -55,7 +55,7 @@ def prepare(posts: list, channel: str or int):
         post_keyboard.add_button(
             2,
             caption= 'Подписаться',
-            link= 'https://telegram.me/redditchaneltgbot?start=%s'
+            link= 'https://telegram.me/redditchanelbot?start=%s'
             % post['author']            
         )
         send(post['url'], channel, quote(post['title']) , post_keyboard)
